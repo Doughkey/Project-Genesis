@@ -1,0 +1,23 @@
+services:
+  matanglawin:
+    build: .
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    network_mode: host
+    environment:
+      NODE_ENV: development
+      HOST: 127.0.0.1
+      PORT: 3000
+      INGEST_INTERVAL_HOURS: ${INGEST_INTERVAL_HOURS:-3}
+      MATANGLAWIN_ADMIN_TOKEN: ${MATANGLAWIN_ADMIN_TOKEN:-}
+    volumes:
+      - matanglawin-data:/app/data
+
+volumes:
+  matanglawin-data:

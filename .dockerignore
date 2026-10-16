@@ -1,0 +1,8 @@
+node_modules
+.git
+.env
+.env.*
+deploy/*.env
+data/news-items.json
+data/weekly-reports.json
+data/exports/

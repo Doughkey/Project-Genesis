@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f6f2">
+  <title>Project Matanglawin | Public-Source Atlas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172822;
+      --muted: #64746d;
+      --subtle: #87938d;
+      --line: #dfe6df;
+      --paper: #f4f6f2;
+      --panel: #ffffff;
+      --forest: #164b3d;
+      --green: #18856d;
+      --green-soft: #e5f2ec;
+      --coral: #d86f50;
+      --gold: #c38b38;
+      --perspective-left: #b94f58;
+      --perspective-center: #4b8f71;
+      --perspective-right: #4b78a8;
+      --perspective-unrated: #89958f;
+      --mono: "DM Mono", ui-monospace, monospace;
+      --sans: "Manrope", "Helvetica Neue", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 13px; }
+    button, input, select { font: inherit; }
+    button { color: inherit; }
+    .topbar { height: 66px; display: flex; align-items: center; gap: 36px; padding: 0 30px; background: #fff; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 11px; min-width: 255px; }
+    .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: var(--forest); color: #f5c980; font-size: 15px; font-weight: 800; }
+    .brand-name { font-size: 14px; font-weight: 800; letter-spacing: 0; }
+    .brand-sub { margin-top: 2px; color: var(--subtle); font: 9px var(--mono); letter-spacing: 0; text-transform: uppercase; }
+    .nav { display: flex; align-items: center; gap: 25px; height: 100%; }
+    .nav a { display: flex; align-items: center; height: 100%; color: #728078; text-decoration: none; font-weight: 700; font-size: 12px; border-bottom: 2px solid transparent; }
+    .nav a.active { color: var(--forest); border-bottom-color: var(--green); }
+    .top-right { display: flex; align-items: center; gap: 15px; margin-left: auto; }
+    .archive-pill { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #cfe2d6; border-radius: 999px; padding: 7px 10px; background: #f0f7f2; color: var(--forest); font: 9px var(--mono); text-transform: uppercase; letter-spacing: 0; white-space: nowrap; }
+    .status-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; }
+    .avatar { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 50%; color: var(--forest); font-size: 10px; font-weight: 800; }
+
+    .page { max-width: 1660px; margin: 0 auto; padding: 23px 30px 28px; }
+    .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 17px; }
+    .eyebrow { margin-bottom: 7px; color: var(--green); font: 10px var(--mono); text-transform: uppercase; letter-spacing: 0; }
+    h1 { margin: 0; font-size: 25px; line-height: 1.2; font-weight: 800; letter-spacing: 0; }
+    .lede { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+    .snapshot { text-align: right; color: var(--muted); font: 10px var(--mono); line-height: 1.8; white-space: nowrap; }
+    .snapshot strong { color: var(--forest); font-weight: 500; }
+
+    .notice { display: flex; align-items: center; gap: 10px; min-height: 39px; margin-bottom: 13px; padding: 8px 12px; border: 1px solid #e8d7b6; border-radius: 7px; background: #fff9ed; color: #715a34; font-size: 11px; }
+    .notice-mark { display: grid; flex: 0 0 18px; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #f0dfbd; font: 11px var(--mono); }
+    .notice b { font-weight: 800; }
+    .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 13px; }
+    .metric { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 11px 14px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); }
+    .metric-icon { display: grid; flex: 0 0 34px; place-items: center; width: 34px; height: 34px; border-radius: 8px; color: var(--forest); background: var(--green-soft); font: 14px var(--mono); }
+    .metric:nth-child(2) .metric-icon { color: #966a2d; background: #fbf1df; }
+    .metric:nth-child(3) .metric-icon { color: #9c5945; background: #f9eae4; }
+    .metric-label { color: var(--muted); font-size: 10px; font-weight: 700; }
+    .metric-value { margin-top: 2px; font-size: 16px; line-height: 1.1; font-weight: 800; }
+    .metric-note { margin-left: auto; color: var(--subtle); font: 9px var(--mono); text-align: right; }
+
+    .workspace { display: grid; grid-template-columns: 218px minmax(390px, 1fr) 298px; align-items: stretch; gap: 13px; min-height: 560px; height: calc(100vh - 254px); }
+    .panel { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); }
+    .side-panel { padding: 15px 14px; overflow-y: auto; }
+    .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 13px; }
+    .section-title { margin: 0; font-size: 11px; font-weight: 800; }
+    .section-kicker { color: var(--subtle); font: 9px var(--mono); text-transform: uppercase; }
+    .filter-group { padding: 14px 0; border-top: 1px solid #edf0ec; }
+    .filter-group:first-of-type { padding-top: 0; border-top: 0; }
+    .filter-label { margin-bottom: 10px; color: var(--muted); font: 9px var(--mono); text-transform: uppercase; }
+    .select-wrap { position: relative; }
+    .select-wrap::after { content: "⌄"; position: absolute; top: 7px; right: 10px; color: var(--muted); pointer-events: none; }
+    select, .search-input { width: 100%; height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: 5px; outline: 0; background: #fff; color: var(--ink); font-size: 11px; }
+    select { appearance: none; padding-right: 27px; }
+    select:focus, .search-input:focus { border-color: #82b8a4; box-shadow: 0 0 0 2px #e7f3ed; }
+    .check-list { display: grid; gap: 11px; }
+    .check-row { display: flex; align-items: center; gap: 8px; color: #45564e; font-size: 11px; cursor: pointer; }
+    .check-row input { width: 14px; height: 14px; margin: 0; accent-color: var(--green); }
+    .check-count { margin-left: auto; color: #9aa49e; font: 9px var(--mono); }
+    .source-status { display: flex; gap: 9px; padding: 11px 10px; border-radius: 5px; background: #f4f7f4; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .source-status .lock { color: var(--green); font-size: 14px; }
+    .source-status strong { display: block; color: var(--ink); font-size: 10px; }
+    .scope-note { margin-top: 10px; padding: 9px 10px; border-left: 2px solid #d9a76a; background: #fbf7ef; color: #77664c; font-size: 9px; line-height: 1.55; }
+    .scope-note strong { display: block; margin-bottom: 3px; color: #69532e; font-size: 9px; }
+    .reset-button { margin-top: 13px; padding: 0; border: 0; background: transparent; color: var(--green); font-size: 10px; font-weight: 800; cursor: pointer; }
+    .reset-button:hover { color: var(--forest); text-decoration: underline; }
+
+    .map-panel { display: flex; flex-direction: column; }
+    .map-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 52px; padding: 0 14px; border-bottom: 1px solid var(--line); }
+    .map-heading { display: flex; align-items: center; gap: 9px; }
+    .map-heading h2 { margin: 0; font-size: 12px; font-weight: 800; }
+    .map-heading span { display: block; margin-top: 3px; color: var(--subtle); font: 9px var(--mono); }
+    .view-switch { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 5px; background: #f6f8f5; }
+    .view-switch button { padding: 5px 9px; border: 0; border-radius: 3px; background: transparent; color: var(--muted); font-size: 10px; font-weight: 700; cursor: pointer; }
+    .view-switch button.active { background: #fff; color: var(--forest); box-shadow: 0 1px 3px #163d2b18; }
+    .map-wrap { position: relative; flex: 1; min-height: 390px; background: #e8efec; }
+    #map { position: absolute; inset: 0; z-index: 1; }
+    .map-overlay { position: absolute; z-index: 500; left: 13px; top: 13px; padding: 7px 9px; border: 1px solid #d8e1dc; border-radius: 4px; background: #ffffffed; color: var(--forest); font: 9px var(--mono); text-transform: uppercase; pointer-events: none; }
+    .map-legend { position: absolute; z-index: 500; right: 12px; bottom: 12px; display: grid; gap: 6px; max-width: 205px; padding: 9px 10px; border: 1px solid #d8e1dc; border-radius: 5px; background: #ffffffed; color: #52645b; font-size: 9px; pointer-events: none; }
+    .legend-item { display: flex; align-items: center; gap: 7px; }
+    .legend-dot { width: 10px; height: 10px; border: 2px solid #fff; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 1px var(--green); }
+    .legend-dot.west { background: var(--coral); box-shadow: 0 0 0 1px var(--coral); }
+    .legend-dot.left { background: var(--perspective-left); box-shadow: 0 0 0 1px var(--perspective-left); }
+    .legend-dot.center { background: var(--perspective-center); box-shadow: 0 0 0 1px var(--perspective-center); }
+    .legend-dot.right { background: var(--perspective-right); box-shadow: 0 0 0 1px var(--perspective-right); }
+    .legend-dot.unrated { background: var(--perspective-unrated); box-shadow: 0 0 0 1px var(--perspective-unrated); }
+    .coverage-marker-icon { border: 0 !important; background: transparent !important; }
+    .coverage-donut { display: grid; place-items: center; width: 38px; height: 38px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 1px 5px #13281f66; }
+    .coverage-donut span { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid #dfe6df; border-radius: 50%; background: #fff; color: var(--ink); font: 8px var(--mono); }
+    .coverage-legend-title { margin-bottom: 2px; color: var(--forest); font: 8px var(--mono); text-transform: uppercase; }
+    .map-footer { display: flex; justify-content: space-between; gap: 12px; min-height: 37px; padding: 10px 13px; border-top: 1px solid var(--line); color: var(--muted); font-size: 9px; }
+    .map-footer span:last-child { font-family: var(--mono); }
+    .leaflet-container { font-family: var(--sans); }
+    .leaflet-control-attribution { font-size: 8px !important; }
+    .leaflet-popup-content-wrapper { border-radius: 5px; }
+    .area-popup { min-width: 155px; font-size: 11px; line-height: 1.5; }
+    .area-popup strong { display: block; color: var(--forest); font-size: 12px; }
+    .area-popup span { color: var(--muted); }
+    .area-label { padding: 3px 5px !important; border: 1px solid #dbe3dc !important; border-radius: 3px !important; background: #ffffffed !important; color: #335047 !important; box-shadow: none !important; font: 9px var(--mono) !important; }
+    .area-label::before { display: none; }
+
+    .feed-panel { display: flex; flex-direction: column; }
+    .feed-head { padding: 15px 14px 12px; border-bottom: 1px solid var(--line); }
+    .feed-heading { display: flex; align-items: center; justify-content: space-between; }
+    .feed-heading h2 { margin: 0; font-size: 12px; font-weight: 800; }
+    .feed-badge { padding: 4px 6px; border-radius: 3px; background: #edf2ee; color: var(--muted); font: 8px var(--mono); text-transform: uppercase; }
+    .feed-description { margin: 5px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
+    .advisory-strip { padding: 11px 13px 2px; border-bottom: 1px solid var(--line); background: #fbfcf8; }
+    .advisory-strip-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+    .advisory-strip-title { color: var(--forest); font: 9px var(--mono); text-transform: uppercase; }
+    .advisory-source { color: var(--subtle); font: 8px var(--mono); }
+    .advisory-list { display: grid; }
+    .advisory-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 8px; padding: 8px 0; border-top: 1px solid #e9eee7; }
+    .advisory-item a { color: var(--ink); font-size: 10px; font-weight: 700; line-height: 1.45; text-decoration: none; }
+    .advisory-item a:hover { color: var(--green); text-decoration: underline; }
+    .advisory-item time { color: var(--subtle); font: 8px var(--mono); white-space: nowrap; }
+    .advisory-empty { padding: 5px 0 9px; color: var(--muted); font-size: 9px; line-height: 1.5; }
+    .policy-wire { padding: 11px 13px; border-bottom: 1px solid var(--line); }
+    .policy-wire-head { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+    .policy-wire-title { color: var(--forest); font: 9px var(--mono); text-transform: uppercase; }
+    .policy-wire-note { margin: 0 0 5px; color: var(--muted); font-size: 9px; line-height: 1.45; }
+    .policy-wire-list { display: grid; }
+    .policy-wire-item { padding: 8px 0; border-top: 1px solid #e9eee7; }
+    .policy-wire-item a { color: var(--ink); font-size: 10px; font-weight: 700; line-height: 1.45; text-decoration: none; }
+    .policy-wire-item a:hover { color: var(--green); text-decoration: underline; }
+    .policy-wire-meta { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; color: var(--subtle); font: 8px var(--mono); }
+    .weekly-briefs { padding: 11px 13px; border-bottom: 1px solid var(--line); }
+    .weekly-briefs-head { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+    .weekly-briefs-title { color: var(--forest); font: 9px var(--mono); text-transform: uppercase; }
+    .weekly-brief { padding: 8px 0; border-top: 1px solid #e9eee7; }
+    .weekly-brief h3 { margin: 0; font-size: 10px; }
+    .weekly-brief p { margin: 4px 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+    .weekly-brief ul { display: grid; gap: 4px; margin: 6px 0 0; padding-left: 14px; color: var(--muted); font-size: 9px; line-height: 1.45; }
+    .weekly-brief a { color: var(--green); text-decoration: none; }
+    .weekly-brief a:hover { text-decoration: underline; }
+    .feed-items { flex: 1; overflow: auto; padding: 0 13px; }
+    .feed-item { padding: 14px 1px; border-bottom: 1px solid #edf0ec; }
+    .feed-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--subtle); font: 8px var(--mono); text-transform: uppercase; }
+    .category-tag { padding: 3px 5px; border-radius: 3px; background: #e8f2ed; color: #3d725e; }
+    .category-tag.maritime { background: #f8ebe5; color: #a45d43; }
+    .category-tag.public { background: #f5f0e3; color: #8b6c35; }
+    .feed-item h3 { margin: 8px 0 4px; font-size: 11px; line-height: 1.45; font-weight: 800; }
+    .feed-item p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.55; }
+    .feed-location { display: flex; align-items: center; gap: 5px; margin-top: 8px; color: #557066; font-size: 9px; }
+    .feed-source { display: flex; justify-content: space-between; gap: 8px; margin-top: 9px; padding-top: 8px; border-top: 1px dashed #e4e9e4; color: #839088; font: 8px var(--mono); }
+    .empty-search { display: none; padding: 25px 8px; color: var(--muted); font-size: 11px; line-height: 1.6; text-align: center; }
+    .feed-bottom { padding: 11px 13px; border-top: 1px solid var(--line); color: var(--subtle); font: 8px var(--mono); line-height: 1.5; }
+    .timeline-view { display: none; flex: 1; overflow: auto; padding: 18px; background: #fbfcfa; }
+    .timeline-view.active { display: block; }
+    .timeline-empty { max-width: 370px; margin: 45px auto; text-align: center; }
+    .timeline-empty .empty-icon { display: grid; place-items: center; width: 42px; height: 42px; margin: 0 auto 12px; border-radius: 50%; background: var(--green-soft); color: var(--forest); font: 15px var(--mono); }
+    .timeline-empty h3 { margin: 0; font-size: 13px; }
+    .timeline-empty p { color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .coverage-intro { max-width: 510px; margin: 5px 0 18px; }
+    .coverage-intro .eyebrow { margin-bottom: 6px; }
+    .coverage-intro h3 { margin: 0; font-size: 15px; }
+    .coverage-intro p { margin: 7px 0 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .coverage-grid { display: grid; grid-template-columns: minmax(105px, .8fr) repeat(2, minmax(0, 1fr)); overflow: hidden; border: 1px solid var(--line); border-radius: 5px; background: #fff; }
+    .coverage-cell { min-width: 0; padding: 10px; border-right: 1px solid #e9ede8; border-bottom: 1px solid #e9ede8; color: var(--muted); font-size: 9px; line-height: 1.5; overflow-wrap: anywhere; }
+    .coverage-cell:nth-child(3n) { border-right: 0; }
+    .coverage-cell:nth-last-child(-n + 3) { border-bottom: 0; }
+    .coverage-head { background: #f5f8f4; color: var(--forest); font: 9px var(--mono); text-transform: uppercase; }
+    .coverage-label { color: var(--ink); font-weight: 800; }
+    .coverage-warning { max-width: 510px; }
+
+    .footer { display: flex; justify-content: space-between; gap: 15px; padding: 13px 2px 0; color: var(--subtle); font-size: 9px; }
+    .footer a { color: var(--green); font-weight: 700; text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+    .leaflet-tile { filter: saturate(.73) hue-rotate(5deg); }
+    @media (max-width: 1120px) {
+      .workspace { grid-template-columns: 190px minmax(340px, 1fr); height: auto; }
+      .feed-panel { grid-column: 1 / -1; min-height: 290px; }
+      .feed-items { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 15px; }
+      .feed-item { align-self: start; }
+    }
+    @media (max-width: 720px) {
+      .topbar { height: 58px; padding: 0 16px; gap: 12px; }
+      .brand { min-width: 0; }
+      .nav { display: none; }
+      .archive-pill { padding: 6px 8px; font-size: 8px; }
+      .avatar { display: none; }
+      .page { padding: 19px 13px 22px; }
+      .page-heading { align-items: flex-start; flex-direction: column; gap: 8px; }
+      h1 { font-size: 22px; }
+      .snapshot { text-align: left; }
+      .notice { align-items: flex-start; font-size: 10px; line-height: 1.5; }
+      .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+      .metric { align-items: flex-start; flex-direction: column; gap: 7px; min-height: 102px; padding: 9px; }
+      .metric-icon { width: 28px; height: 28px; flex-basis: 28px; }
+      .metric-value { font-size: 14px; }
+      .metric-note { margin: 0; text-align: left; font-size: 8px; }
+      .workspace { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+      .filter-panel { order: 2; }
+      .map-panel { order: 1; min-height: 490px; }
+      .feed-panel { order: 3; min-height: 360px; }
+      .map-wrap { min-height: 410px; }
+      .side-panel { padding: 14px; }
+      .filter-panel .filter-groups { display: block; }
+      .filter-panel .filter-group:nth-child(2) { border-top: 1px solid #edf0ec; padding-top: 14px; }
+      .feed-items { display: block; }
+      .coverage-cell { padding: 8px 6px; font-size: 8px; }
+      .footer { flex-direction: column; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand" aria-label="Project Matanglawin">
+      <div class="brand-mark" aria-hidden="true">M</div>
+      <div><div class="brand-name">Project Matanglawin</div><div class="brand-sub">Public-source atlas</div></div>
+    </div>
+    <nav class="nav" aria-label="Main navigation">
+      <a class="active" href="#overview">Overview</a>
+      <a href="#archive">Archive</a>
+      <a href="#methodology">Methodology</a>
+    </nav>
+    <div class="top-right">
+      <span class="archive-pill" id="dataMode"><span class="status-dot"></span>Connecting</span>
+      <div class="avatar" aria-hidden="true">PM</div>
+    </div>
+  </header>
+
+  <main class="page" id="overview">
+    <div class="page-heading">
+      <div>
+        <div class="eyebrow">Philippines · Public information</div>
+        <h1>The public record, in context.</h1>
+        <p class="lede">A historical view of publicly reported security and civic activity across the archipelago.</p>
+      </div>
+      <div class="snapshot"><strong>PUBLIC POLICY FEED</strong><br>Live headlines · reviewed archive</div>
+    </div>
+
+    <div class="notice" role="note">
+      <span class="notice-mark" aria-hidden="true">i</span>
+      <span id="dataNotice"><b>Connecting:</b> loading public headlines and the reviewed archive.</span>
+    </div>
+
+    <section class="metrics" aria-label="Atlas summary">
+      <article class="metric"><span class="metric-icon" aria-hidden="true">◎</span><div><div class="metric-label">Published records</div><div class="metric-value" id="publishedRecordCount">Loading</div></div><div class="metric-note">reviewed archive</div></article>
+      <article class="metric"><span class="metric-icon" aria-hidden="true">⌖</span><div><div class="metric-label">Coverage areas</div><div class="metric-value">Broad-area only</div></div><div class="metric-note">generalized</div></article>
+      <article class="metric"><span class="metric-icon" aria-hidden="true">◷</span><div><div class="metric-label">Live tracking</div><div class="metric-value">Not provided</div></div><div class="metric-note">archive-first</div></article>
+    </section>
+
+    <section class="workspace" id="archive" aria-label="Public-source activity atlas">
+      <aside class="panel side-panel filter-panel" aria-label="Map filters">
+        <div class="section-head"><h2 class="section-title">Explore the archive</h2><span class="section-kicker">Filters</span></div>
+        <div class="filter-groups">
+          <div class="filter-group">
+            <div class="filter-label">Time period</div>
+            <div class="select-wrap"><select id="period" aria-label="Time period"><option value="archive">Historical archive</option><option value="year">Past year</option><option value="all">All available</option></select></div>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">Theatre · generalized areas</div>
+            <div class="check-list">
+              <label class="check-row"><input class="theatre-filter filter-input" type="checkbox" value="luzon" checked> Luzon Theatre</label>
+              <label class="check-row"><input class="theatre-filter filter-input" type="checkbox" value="visayas" checked> Visayas Theatre</label>
+              <label class="check-row"><input class="theatre-filter filter-input" type="checkbox" value="mindanao" checked> Mindanao Theatre</label>
+              <label class="check-row"><input class="theatre-filter filter-input" type="checkbox" value="west-philippine-sea" checked> West Philippine Sea</label>
+              <label class="check-row"><input class="theatre-filter filter-input" type="checkbox" value="pacific" checked> Pacific-facing waters</label>
+            </div>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">Policy topics</div>
+            <div class="check-list">
+              <label class="check-row"><input class="topic-filter filter-input" type="checkbox" value="elections" checked> Elections</label>
+              <label class="check-row"><input class="topic-filter filter-input" type="checkbox" value="diplomacy" checked> Diplomacy</label>
+              <label class="check-row"><input class="topic-filter filter-input" type="checkbox" value="legislation" checked> Legislation</label>
+              <label class="check-row"><input class="topic-filter filter-input" type="checkbox" value="courts-and-oversight" checked> Courts & oversight</label>
+              <label class="check-row"><input class="topic-filter filter-input" type="checkbox" value="trade-and-economy" checked> Trade & economy</label>
+              <label class="check-row"><input class="topic-filter filter-input" type="checkbox" value="public-policy" checked> Public policy</label>
+            </div>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">Reviewed archive types</div>
+            <div class="check-list">
+              <label class="check-row"><input class="archive-category-filter filter-input" type="checkbox" value="maritime" checked> Maritime records</label>
+              <label class="check-row"><input class="archive-category-filter filter-input" type="checkbox" value="security" checked> Security summaries</label>
+              <label class="check-row"><input class="archive-category-filter filter-input" type="checkbox" value="public" checked> Public activity</label>
+              <label class="check-row"><input class="archive-category-filter filter-input" type="checkbox" value="humanitarian" checked> Humanitarian records</label>
+            </div>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">Source perspective · outlet-level</div>
+            <div class="select-wrap"><select id="perspective" aria-label="Filter by source perspective"><option value="all">All source labels</option><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option><option value="unrated">Unrated</option></select></div>
+            <div class="scope-note"><strong>Editorial label, not truth score</strong>Use a published, transparent outlet-classification method. Individual claims still need independent sourcing.</div>
+          </div>
+          <div class="filter-group">
+            <div class="filter-label">Find in archive</div>
+            <input class="search-input" id="search" type="search" placeholder="Search reviewed records" aria-label="Search reviewed records">
+          </div>
+          <div class="filter-group">
+            <div class="source-status"><span class="lock" aria-hidden="true">◇</span><span><strong>Source review enabled</strong>Attribution and uncertainty belong on every record.</span></div>
+            <div class="scope-note"><strong>Operational layers excluded</strong>No unit or asset positions, movement routes, operating ranges or readiness, frontlines, or logistics supply lines.</div>
+            <button class="reset-button" id="reset" type="button">Reset filters</button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="panel map-panel" aria-label="Map and timeline">
+        <div class="map-toolbar">
+          <div class="map-heading"><div><h2>Regional overview</h2><span>Philippine islands & surrounding waters</span></div></div>
+          <div class="view-switch" role="group" aria-label="Choose view">
+            <button class="active" type="button" data-view="map">Map</button>
+            <button type="button" data-view="timeline">Timeline</button>
+            <button type="button" data-view="coverage">Coverage</button>
+          </div>
+        </div>
+        <div class="map-wrap" id="mapView">
+          <div id="map" role="img" aria-label="Map showing broad, illustrative reporting areas across the Philippines"></div>
+          <div class="map-overlay">Reviewed source mix · broad areas</div>
+          <div class="map-legend" aria-label="Source coverage map legend">
+            <div class="coverage-legend-title">Archive + headline mentions</div>
+            <div class="legend-item"><span class="legend-dot left"></span>Left-labeled outlets</div>
+            <div class="legend-item"><span class="legend-dot center"></span>Center-labeled outlets</div>
+            <div class="legend-item"><span class="legend-dot right"></span>Right-labeled outlets</div>
+            <div class="legend-item"><span class="legend-dot unrated"></span>Unrated / gray area</div>
+          </div>
+        </div>
+        <div class="timeline-view" id="timelineView">
+          <div class="timeline-empty"><div class="empty-icon" aria-hidden="true">◷</div><h3>Archive timeline</h3><p>Completed, reviewed records appear here by event and publication date. The live policy headline stream is shown separately in the news panel.</p></div>
+        </div>
+        <div class="timeline-view" id="coverageView">
+          <div class="coverage-intro"><div class="eyebrow">Source comparison · text only</div><h3>Compare how outlets report an event</h3><p>Place cited accounts side by side, preserve their wording, and note corroboration and uncertainty. Perspective labels describe outlets, not the truth of a claim.</p></div>
+          <div class="coverage-grid" role="table" aria-label="Source coverage comparison">
+            <div class="coverage-cell coverage-head" role="columnheader">Review field</div><div class="coverage-cell coverage-head" role="columnheader">Source account A</div><div class="coverage-cell coverage-head" role="columnheader">Source account B</div>
+            <div class="coverage-cell coverage-label" role="rowheader">Outlet label</div><div class="coverage-cell" role="cell">Not available</div><div class="coverage-cell" role="cell">Not available</div>
+            <div class="coverage-cell coverage-label" role="rowheader">Published account</div><div class="coverage-cell" role="cell">No selected records</div><div class="coverage-cell" role="cell">No selected records</div>
+            <div class="coverage-cell coverage-label" role="rowheader">Corroboration & caveats</div><div class="coverage-cell" role="cell">Not assessed</div><div class="coverage-cell" role="cell">Not assessed</div>
+          </div>
+          <div class="scope-note coverage-warning"><strong>No operational inference</strong>This comparison does not generate or visualize unit positions, routes, ranges, readiness, or future movements.</div>
+        </div>
+        <div class="map-footer"><span>Headline mentions require explicit area names; they are not event locations or local political beliefs.</span><span>BASEMAP © OPENSTREETMAP</span></div>
+      </section>
+
+      <aside class="panel feed-panel" aria-label="Public policy news and reviewed archive">
+        <div class="feed-head">
+          <div class="feed-heading"><h2>Reviewed archive</h2><span class="feed-badge">Approved records</span></div>
+          <p class="feed-description" id="feedDescription">Completed, broad-area records appear after review.</p>
+        </div>
+        <section class="advisory-strip" aria-label="Official public weather advisories">
+          <div class="advisory-strip-head"><a class="advisory-strip-title" href="https://publicalert.pagasa.dost.gov.ph/feeds/" target="_blank" rel="noopener noreferrer">PAGASA · Public advisories</a><span class="advisory-source" id="advisoryStatus">Loading</span></div>
+          <div class="advisory-list" id="advisoryItems" aria-live="polite"><div class="advisory-empty">Connecting to the official public-alert feed…</div></div>
+          <div class="advisory-source">Official feed · CC BY 4.0 · metadata only</div>
+        </section>
+        <section class="policy-wire" aria-label="Philippine public policy headlines">
+          <div class="policy-wire-head"><span class="policy-wire-title">Philippine politics & policy</span><span class="advisory-source" id="policyWireStatus">Loading</span></div>
+          <p class="policy-wire-note">Recent headlines from the built-in source set. Policy topics only; no military or conflict tracking.</p>
+          <div class="policy-wire-list" id="policyWireItems" aria-live="polite"><div class="advisory-empty">Loading public headlines…</div></div>
+        </section>
+        <section class="weekly-briefs" aria-label="Weekly policy reports">
+          <div class="weekly-briefs-head"><span class="weekly-briefs-title">Weekly briefs</span><span class="advisory-source" id="weeklyBriefStatus">Loading</span></div>
+          <div id="weeklyBriefItems"><div class="advisory-empty">Building the current weekly brief…</div></div>
+        </section>
+        <div class="feed-items" id="feedItems" aria-live="polite"></div>
+        <div class="empty-search" id="emptySearch">No matching reviewed records. Try another search or reset the filters.</div>
+        <div class="feed-bottom" id="feedDisclosure">Reviewed archive only · no active tracking or position forecasts</div>
+      </aside>
+    </section>
+
+    <footer class="footer" id="methodology">
+      <span>Project Matanglawin · public-source research concept</span>
+      <span>Historical, broad-area summaries · no asset tracking or position forecasts</span>
+      <a href="#methodology" id="methodLink">Methodology & ethics</a>
+    </footer>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>window.MATANGLAWIN_API_BASE_URL = window.MATANGLAWIN_API_BASE_URL || "";</script>
+  <script src="js/data-source.js"></script>
+  <script>
+    (() => {
+      const mapElement = document.getElementById("map");
+      const categoryLabels = { maritime: "Maritime", security: "Security", public: "Public activity", humanitarian: "Humanitarian" };
+      const confidenceLabels = { confirmed: "Confirmed", reported: "Reported", unverified: "Unverified" };
+      const perspectiveOrder = ["left", "center", "right", "unrated"];
+      const perspectiveLabels = { left: "Left-labeled outlets", center: "Center-labeled outlets", right: "Right-labeled outlets", unrated: "Unrated / gray area" };
+      const perspectiveColors = { left: "#b94f58", center: "#4b8f71", right: "#4b78a8", unrated: "#89958f" };
+      let archiveRecords = [];
+      let visibleRecords = [];
+      let policyNewsRecords = [];
+      let visiblePolicyNewsRecords = [];
+      let archiveMode = "connecting";
+      let map;
+      const areas = [
+        { name: "Luzon Theatre · generalized", theatre: "luzon", center: [17.0, 121.3], radius: 175000, type: "island", categories: ["security", "public"] },
+        { name: "Visayas Theatre · generalized", theatre: "visayas", center: [10.2, 123.5], radius: 185000, type: "island", categories: ["humanitarian", "public"] },
+        { name: "Mindanao Theatre · generalized", theatre: "mindanao", center: [7.7, 125.1], radius: 215000, type: "island", categories: ["security", "humanitarian"] },
+        { name: "West Philippine Sea · generalized", theatre: "west-philippine-sea", center: [13.3, 117.0], radius: 250000, type: "maritime", categories: ["maritime", "public"] },
+        { name: "Pacific-facing waters · generalized", theatre: "pacific", center: [14.2, 128.6], radius: 240000, type: "maritime", categories: ["maritime", "public"] }
+      ];
+      const areaLayers = [];
+
+      function createCoverageIcon(counts) {
+        const total = perspectiveOrder.reduce((sum, perspective) => sum + counts[perspective], 0);
+        let position = 0;
+        const stops = total ? perspectiveOrder.map((perspective) => {
+          const start = position;
+          position += counts[perspective] / total * 100;
+          return `${perspectiveColors[perspective]} ${start.toFixed(2)}% ${position.toFixed(2)}%`;
+        }).join(",") : `${perspectiveColors.unrated} 0% 100%`;
+        const label = total > 99 ? "99+" : String(total);
+        return L.divIcon({
+          className: "coverage-marker-icon",
+          html: `<span class="coverage-donut" style="background:conic-gradient(${stops})"><span>${label}</span></span>`,
+          iconSize: [38, 38],
+          iconAnchor: [19, 19]
+        });
+      }
+
+      function createCoveragePopup(area, counts, headlineMentionCount) {
+        const popup = document.createElement("div");
+        popup.className = "area-popup";
+        appendText(popup, "strong", "", area.name);
+        appendText(popup, "span", "", "Coverage counts by outlet label; not event locations or local political opinion.");
+        perspectiveOrder.forEach((perspective) => {
+          const row = document.createElement("div");
+          row.className = "legend-item";
+          const dot = document.createElement("span");
+          dot.className = `legend-dot ${perspective}`;
+          appendText(row, "span", "", `${perspectiveLabels[perspective]}: ${counts[perspective]}`);
+          row.prepend(dot);
+          popup.append(row);
+        });
+        appendText(popup, "span", "", `Explicit policy headline mentions: ${headlineMentionCount}`);
+        if (perspectiveOrder.every((perspective) => counts[perspective] === 0) && headlineMentionCount === 0) appendText(popup, "span", "", "No reviewed coverage in this area yet.");
+        return popup;
+      }
+
+      function addAreaMarkers() {
+        if (!window.L || !mapElement) {
+          mapElement.innerHTML = '<div style="display:grid;place-items:center;height:100%;padding:24px;color:#52645b;text-align:center;font:12px Manrope,sans-serif">Map library unavailable. The prototype layout is still available; connect to the internet to load the basemap.</div>';
+          return;
+        }
+        map = L.map(mapElement, { zoomControl: false, scrollWheelZoom: false, minZoom: 4, maxZoom: 8, maxBounds: [[3, 113], [22.5, 132]], maxBoundsViscosity: 0.85 }).setView([12.2, 122.4], 5);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          maxZoom: 18
+        }).addTo(map);
+        L.control.zoom({ position: "bottomleft" }).addTo(map);
+
+        areas.forEach((area) => {
+          const circle = L.circle(area.center, {
+            radius: area.radius,
+            color: "#87958e",
+            fillColor: "#aeb9b3",
+            fillOpacity: 0.12,
+            weight: 1.5,
+            opacity: 0.8
+          }).addTo(map);
+          circle.bindTooltip(area.name, { permanent: true, direction: "center", className: "area-label" });
+          const counts = Object.fromEntries(perspectiveOrder.map((perspective) => [perspective, 0]));
+          circle.bindPopup(createCoveragePopup(area, counts, 0));
+          const marker = L.marker(area.center, { icon: createCoverageIcon(counts), keyboard: true, title: `${area.name}: no reviewed records` }).addTo(map);
+          marker.bindPopup(createCoveragePopup(area, counts, 0));
+          areaLayers.push({ layer: circle, marker, area });
+        });
+      }
+
+      function updateAreas() {
+        if (!map) return;
+        const selectedTheatres = [...document.querySelectorAll('.theatre-filter:checked')].map((input) => input.value);
+        const selectedArchiveCategories = [...document.querySelectorAll('.archive-category-filter:checked')].map((input) => input.value);
+        areaLayers.forEach(({ layer, marker, area }) => {
+          const newsMentions = visiblePolicyNewsRecords.filter((record) => record.coverageTheatres.includes(area.theatre));
+          const archiveCoverageVisible = area.categories.some((category) => selectedArchiveCategories.includes(category));
+          const visible = selectedTheatres.includes(area.theatre) && (archiveCoverageVisible || newsMentions.length > 0);
+          const counts = Object.fromEntries(perspectiveOrder.map((perspective) => [perspective, 0]));
+          visibleRecords.filter((record) => record.theatre === area.theatre && record.confidence !== "example")
+            .forEach((record) => { if (Object.hasOwn(counts, record.perspective)) counts[record.perspective] += 1; });
+          newsMentions.forEach((record) => { if (Object.hasOwn(counts, record.sourcePerspective)) counts[record.sourcePerspective] += 1; });
+          marker.setIcon(createCoverageIcon(counts));
+          marker.options.title = `${area.name}: ${Object.values(counts).reduce((sum, count) => sum + count, 0)} coverage items, ${newsMentions.length} headline mentions`;
+          layer.setPopupContent(createCoveragePopup(area, counts, newsMentions.length));
+          marker.setPopupContent(createCoveragePopup(area, counts, newsMentions.length));
+          if (visible && !map.hasLayer(layer)) layer.addTo(map);
+          if (!visible && map.hasLayer(layer)) map.removeLayer(layer);
+          if (visible && !map.hasLayer(marker)) marker.addTo(map);
+          if (!visible && map.hasLayer(marker)) map.removeLayer(marker);
+        });
+      }
+
+      function appendText(parent, tagName, className, text) {
+        const element = document.createElement(tagName);
+        if (className) element.className = className;
+        element.textContent = text;
+        parent.append(element);
+        return element;
+      }
+
+      function renderRecord(record) {
+        const article = document.createElement("article");
+        article.className = "feed-item";
+        article.dataset.category = record.category;
+        article.dataset.theatre = record.theatre;
+        article.dataset.perspective = record.perspective;
+
+        const meta = document.createElement("div");
+        meta.className = "feed-meta";
+        appendText(meta, "span", "", record.eventDate ? `Event date · ${record.eventDate}` : "Historical record");
+        appendText(meta, "span", `category-tag ${record.category === "maritime" ? "maritime" : ""}`, categoryLabels[record.category]);
+        article.append(meta);
+
+        appendText(article, "h3", "", record.title);
+        appendText(article, "p", "", record.summary);
+
+        const location = document.createElement("div");
+        location.className = "feed-location";
+        appendText(location, "span", "", "⌖");
+        appendText(location, "span", "", record.locationLabel);
+        article.append(location);
+
+        const source = document.createElement("div");
+        source.className = "feed-source";
+        const sourceName = record.source.url ? document.createElement("a") : document.createElement("span");
+        sourceName.textContent = record.source.name;
+        if (record.source.url) {
+          sourceName.href = record.source.url;
+          sourceName.target = "_blank";
+          sourceName.rel = "noopener noreferrer";
+        }
+        source.append(sourceName);
+        appendText(source, "span", "", `${confidenceLabels[record.confidence]} · ${record.perspective === "unrated" ? "Unrated source" : `${record.perspective} source label`}`);
+        article.append(source);
+        return article;
+      }
+
+      function updateFeed() {
+        const query = document.getElementById("search").value.trim().toLowerCase();
+        const selectedTheatres = [...document.querySelectorAll('.theatre-filter:checked')].map((input) => input.value);
+        const selectedArchiveCategories = [...document.querySelectorAll('.archive-category-filter:checked')].map((input) => input.value);
+        const selectedPolicyTopics = [...document.querySelectorAll('.topic-filter:checked')].map((input) => input.value);
+        const selectedPerspective = document.getElementById("perspective").value;
+        const period = document.getElementById("period").value;
+        const yearAgo = new Date();
+        yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+        visibleRecords = archiveRecords.filter((record) => {
+          const matchesTheatre = selectedTheatres.includes(record.theatre);
+          const matchesCategory = selectedArchiveCategories.includes(record.category);
+          const matchesPerspective = selectedPerspective === "all" || selectedPerspective === record.perspective;
+          const searchableText = [record.title, record.summary, record.locationLabel, record.source.name, record.perspective].join(" ").toLowerCase();
+          const matchesSearch = !query || searchableText.includes(query);
+          const matchesPeriod = period !== "year" || (record.eventDate && new Date(`${record.eventDate}T00:00:00`) >= yearAgo);
+          return matchesTheatre && matchesCategory && matchesPerspective && matchesSearch && matchesPeriod;
+        }).sort((first, second) => (second.eventDate || second.publishedAt || "").localeCompare(first.eventDate || first.publishedAt || ""));
+        visiblePolicyNewsRecords = policyNewsRecords.filter((record) => {
+          const matchesTopic = selectedPolicyTopics.includes(record.topic);
+          const matchesPerspective = selectedPerspective === "all" || selectedPerspective === record.sourcePerspective;
+          const matchesTheatre = !record.coverageTheatres.length || record.coverageTheatres.some((theatre) => selectedTheatres.includes(theatre));
+          const searchableText = [record.title, record.topic, record.sourceName, record.sourcePerspective].join(" ").toLowerCase();
+          return matchesTopic && matchesPerspective && matchesTheatre && (!query || searchableText.includes(query));
+        });
+        const feedItems = document.getElementById("feedItems");
+        feedItems.replaceChildren(...visibleRecords.map(renderRecord));
+        const visibleCount = visibleRecords.length;
+        document.getElementById("emptySearch").style.display = visibleCount ? "none" : "block";
+        renderPolicyNews();
+        updateAreas();
+      }
+
+      async function loadArchive() {
+        const result = await window.MatanglawinData.loadArchive();
+        if (result.mode !== "archive") {
+          if (archiveMode !== "archive") archiveRecords = [];
+          const dataMode = document.getElementById("dataMode");
+          dataMode.replaceChildren(document.createElement("span"), document.createTextNode(archiveMode === "archive" ? "Stale archive" : "Archive offline"));
+          dataMode.firstElementChild.className = "status-dot";
+          const dataNotice = document.getElementById("dataNotice");
+          dataNotice.replaceChildren(document.createElement("b"), document.createTextNode(archiveMode === "archive"
+            ? "Archive refresh unavailable: showing the last successfully loaded reviewed records."
+            : "Archive service unavailable: no sample records are shown."));
+          dataNotice.firstElementChild.textContent = archiveMode === "archive" ? "Stale archive: " : "Archive offline: ";
+          document.getElementById("publishedRecordCount").textContent = String(archiveRecords.length);
+          document.getElementById("feedDescription").textContent = archiveMode === "archive"
+            ? "Showing cached reviewed records while the archive service is unavailable."
+            : "Reviewed, completed broad-area records appear here when the archive service is available.";
+          updateFeed();
+          return;
+        }
+        archiveRecords = result.records;
+        archiveMode = result.mode;
+        const dataMode = document.getElementById("dataMode");
+        const dataNotice = document.getElementById("dataNotice");
+        const feedDescription = document.getElementById("feedDescription");
+        const feedDisclosure = document.getElementById("feedDisclosure");
+        dataMode.replaceChildren(document.createElement("span"), document.createTextNode("Archive connected"));
+        dataMode.firstElementChild.className = "status-dot";
+        dataNotice.replaceChildren(document.createElement("b"), document.createTextNode("Reviewed records are historical and broad-area. Source links and confidence labels are shown on each entry."));
+        dataNotice.firstElementChild.textContent = "Archive connected: ";
+        document.getElementById("publishedRecordCount").textContent = String(result.meta?.count ?? archiveRecords.length);
+        feedDescription.textContent = "Completed, reviewed public-source records, filtered by broad area, activity, and outlet label.";
+        feedDisclosure.textContent = "Reviewed archive only · no active tracking or position forecasts";
+        updateFeed();
+      }
+
+      async function loadPublicAdvisories() {
+        const list = document.getElementById("advisoryItems");
+        const status = document.getElementById("advisoryStatus");
+        try {
+          const response = await fetch("/api/v1/advisories", { headers: { Accept: "application/json" }, cache: "no-store" });
+          if (!response.ok) throw new Error("Advisory feed unavailable");
+          const payload = await response.json();
+          if (!payload || !Array.isArray(payload.data)) throw new Error("Invalid advisory response");
+          const entries = payload.data.filter((item) => typeof item.title === "string" && typeof item.updatedAt === "string" && typeof item.url === "string");
+          list.replaceChildren();
+          if (!entries.length) {
+            const empty = document.createElement("div");
+            empty.className = "advisory-empty";
+            empty.textContent = "No public advisories are listed by PAGASA right now.";
+            list.append(empty);
+          }
+          entries.slice(0, 5).forEach((item) => {
+            const row = document.createElement("div");
+            row.className = "advisory-item";
+            const link = document.createElement("a");
+            const safeUrl = new URL(item.url);
+            if (safeUrl.protocol !== "https:" || safeUrl.hostname !== "publicalert.pagasa.dost.gov.ph") return;
+            link.href = safeUrl.href;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = item.title;
+            const date = document.createElement("time");
+            date.dateTime = item.updatedAt;
+            date.textContent = new Intl.DateTimeFormat("en-PH", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Manila" }).format(new Date(item.updatedAt));
+            row.append(link, date);
+            list.append(row);
+          });
+          status.textContent = payload.meta?.cached ? "Cached · 10 min" : "Updated";
+        } catch {
+          list.replaceChildren();
+          const empty = document.createElement("div");
+          empty.className = "advisory-empty";
+          empty.textContent = "Official advisories are temporarily unavailable.";
+          list.append(empty);
+          status.textContent = "Unavailable";
+        }
+      }
+
+      async function loadPolicyNews() {
+        const status = document.getElementById("policyWireStatus");
+        try {
+          const response = await fetch("/api/v1/news", { headers: { Accept: "application/json" }, cache: "no-store" });
+          if (!response.ok) throw new Error("News feed unavailable");
+          const payload = await response.json();
+          if (!payload || !Array.isArray(payload.data)) throw new Error("Invalid news response");
+          policyNewsRecords = payload.data.filter((item) => typeof item.title === "string" && typeof item.sourceName === "string" && Array.isArray(item.coverageTheatres));
+          status.textContent = `Updated · ${payload.data.length}`;
+          updateFeed();
+        } catch {
+          policyNewsRecords = [];
+          document.getElementById("policyWireStatus").textContent = "Unavailable";
+          updateFeed();
+        }
+      }
+
+      function renderPolicyNews() {
+        const list = document.getElementById("policyWireItems");
+        const status = document.getElementById("policyWireStatus");
+        list.replaceChildren();
+        if (!visiblePolicyNewsRecords.length) {
+          appendText(list, "div", "advisory-empty", policyNewsRecords.length ? "No headlines match these filters." : "Policy headlines are unavailable or no qualifying items are in the seven-day window.");
+          if (policyNewsRecords.length) status.textContent = "0 matched";
+          return;
+        }
+        visiblePolicyNewsRecords.slice(0, 8).forEach((item) => {
+            const row = document.createElement("article");
+            row.className = "policy-wire-item";
+            const link = document.createElement("a");
+            const safeUrl = new URL(item.url);
+            if (safeUrl.protocol !== "https:") return;
+            link.href = safeUrl.href;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = item.title;
+            row.append(link);
+            const meta = document.createElement("div");
+            meta.className = "policy-wire-meta";
+            appendText(meta, "span", "", `${item.topic} · ${item.sourcePerspective} · ${item.retentionStage}`);
+            appendText(meta, "time", "", `${item.sourceName} · ${new Intl.DateTimeFormat("en-PH", { dateStyle: "medium", timeZone: "Asia/Manila" }).format(new Date(item.publishedAt))}`);
+            row.append(meta);
+            list.append(row);
+        });
+        status.textContent = `${visiblePolicyNewsRecords.length} matched`;
+      }
+
+      async function loadWeeklyBriefs() {
+        const list = document.getElementById("weeklyBriefItems");
+        const status = document.getElementById("weeklyBriefStatus");
+        try {
+          const response = await fetch("/api/v1/reports", { headers: { Accept: "application/json" }, cache: "no-store" });
+          if (!response.ok) throw new Error("Reports unavailable");
+          const payload = await response.json();
+          if (!payload || !Array.isArray(payload.data)) throw new Error("Invalid reports response");
+          list.replaceChildren();
+          const reports = payload.data.slice(0, 2);
+          if (!reports.length) appendText(list, "div", "advisory-empty", "No weekly report is available yet.");
+          reports.forEach((report) => {
+            const article = document.createElement("article");
+            article.className = "weekly-brief";
+            appendText(article, "h3", "", `Week of ${report.weekStart} · ${report.finalized ? "Final" : "In progress"}`);
+            appendText(article, "p", "", report.summary);
+            const highlights = document.createElement("ul");
+            Object.values(report.topicHighlights || {}).flat().slice(0, 4).forEach((item) => {
+              const entry = document.createElement("li");
+              const link = document.createElement("a");
+              const safeUrl = new URL(item.url);
+              if (safeUrl.protocol !== "https:") return;
+              link.href = safeUrl.href;
+              link.target = "_blank";
+              link.rel = "noopener noreferrer";
+              link.textContent = `${item.title} · ${item.sourceName} (${item.sourcePerspective})`;
+              entry.append(link);
+              highlights.append(entry);
+            });
+            article.append(highlights);
+            list.append(article);
+          });
+          status.textContent = `${reports.length} available`;
+        } catch {
+          list.replaceChildren();
+          appendText(list, "div", "advisory-empty", "Weekly reports are temporarily unavailable.");
+          status.textContent = "Unavailable";
+        }
+      }
+
+      addAreaMarkers();
+      loadPublicAdvisories();
+      loadPolicyNews();
+      loadWeeklyBriefs();
+      window.setInterval(loadArchive, 15 * 60 * 1000);
+      window.setInterval(loadPolicyNews, 15 * 60 * 1000);
+      window.setInterval(loadWeeklyBriefs, 60 * 60 * 1000);
+      document.querySelectorAll(".filter-input").forEach((input) => input.addEventListener("change", updateFeed));
+      document.getElementById("search").addEventListener("input", updateFeed);
+      document.getElementById("perspective").addEventListener("change", updateFeed);
+      document.getElementById("reset").addEventListener("click", () => {
+        document.querySelectorAll(".filter-input").forEach((input) => { input.checked = true; });
+        document.getElementById("search").value = "";
+        document.getElementById("period").value = "archive";
+        document.getElementById("perspective").value = "all";
+        updateFeed();
+      });
+      document.querySelectorAll("[data-view]").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.querySelectorAll("[data-view]").forEach((item) => item.classList.toggle("active", item === button));
+          const selectedView = button.dataset.view;
+          const isMap = selectedView === "map";
+          document.getElementById("mapView").style.display = isMap ? "" : "none";
+          document.getElementById("timelineView").classList.toggle("active", selectedView === "timeline");
+          document.getElementById("coverageView").classList.toggle("active", selectedView === "coverage");
+          if (isMap && map) window.setTimeout(() => map.invalidateSize(), 50);
+        });
+      });
+      document.getElementById("period").addEventListener("change", () => {
+        const heading = document.querySelector(".map-heading span");
+        const period = document.getElementById("period").value;
+        heading.textContent = period === "archive" ? "Philippine islands & surrounding waters" : period === "year" ? "Past year · historical archive" : "All available archive records";
+        updateFeed();
+      });
+      document.getElementById("methodLink").addEventListener("click", (event) => {
+        event.preventDefault();
+        window.alert("Methodology: source-linked historical records, broad-area aggregation, explicit uncertainty, and no live tracking or position forecasts. Headline map mentions require an explicit area name and do not indicate an event location.");
+      });
+      loadArchive();
+    })();
+  </script>
+</body>
+</html>
